@@ -1,9 +1,16 @@
 package org.example.tpids2025g1demo1.models;
 
-import java.util.Timer;
+ 
 
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.ManyToOne;
+
+@Entity
 public class DetalleMuestraSismica {
+    @Column()
     private double valor;
+    @ManyToOne
     private TipoDeDato tipoDeDato;
 
     public DetalleMuestraSismica(){}

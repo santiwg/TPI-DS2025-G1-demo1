@@ -1,11 +1,20 @@
 package org.example.tpids2025g1demo1.models;
 import java.time.LocalDateTime;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.ManyToOne;
+
+@Entity
 
 public class CambioEstado {
+    @Column()
     private LocalDateTime fechaHoraFin;
+    @Column()
     private LocalDateTime fechaHoraInicio;
+    @ManyToOne
     private Estado estado;
+    @ManyToOne
     private Empleado empleadoResponsable;
 
     public CambioEstado() {}

@@ -1,8 +1,15 @@
 package org.example.tpids2025g1demo1.models;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+
+@Entity
 public class TipoDeDato {
+    @Column()
     private String denominacion;
+    @Column()
     private String nombreUnidadMedida;
+    @Column()
     private float valorUmbral;
 
     public TipoDeDato(){}

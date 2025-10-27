@@ -3,8 +3,15 @@ package org.example.tpids2025g1demo1.models;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.OneToMany;
+
+@Entity
 public class MuestraSismica {
+    @Column()
     private LocalDateTime fechaHoraMuestra;
+    @OneToMany
     private ArrayList<DetalleMuestraSismica> detalleMuestraSismica;
 
 

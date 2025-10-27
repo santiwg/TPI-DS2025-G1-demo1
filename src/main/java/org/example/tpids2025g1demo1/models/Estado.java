@@ -1,9 +1,15 @@
 package org.example.tpids2025g1demo1.models;
 
-import java.util.Objects;
+ 
 
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+
+@Entity
 public class Estado {
+    @Column()
     private String ambito;
+    @Column()
     private String nombreEstado;
 
     public Estado() {}

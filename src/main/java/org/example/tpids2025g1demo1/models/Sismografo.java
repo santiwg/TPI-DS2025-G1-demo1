@@ -3,13 +3,26 @@ package org.example.tpids2025g1demo1.models;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+
+@Entity
 public class Sismografo {
+    @Column()
     private LocalDateTime fechaAdquisicion;
+    @Column(unique = true)
     private int identificadorSismografo;
+    @Column()
     private String nroSerie;
+    @OneToMany
     private ArrayList<SerieTemporal> serieTemporal;
+    @ManyToOne
     private EstacionSismologica estacionSismologica;
+    @ManyToOne
     private Estado estadoActual;
+    @OneToMany
     private ArrayList<CambioEstado> cambioEstado;
 
     public Sismografo(){}

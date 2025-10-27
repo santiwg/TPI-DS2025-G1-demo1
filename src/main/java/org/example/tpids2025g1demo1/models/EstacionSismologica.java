@@ -2,13 +2,24 @@ package org.example.tpids2025g1demo1.models;
 
 import java.time.LocalDateTime;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+
+@Entity
 public class EstacionSismologica {
+    @Column(unique = true)
     private String codigoEstacion;
+    @Column()
     private String documentoCerficacionAdq;
+    @Column()
     private LocalDateTime fechaSolicitudCertificacion;
+    @Column()
     private float latitud;
+    @Column()
     private float longitud;
+    @Column()
     private String nombre;
+    @Column()
     private int nroCertificacionAdquisicion;
 
     public EstacionSismologica(){}

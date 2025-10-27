@@ -3,12 +3,24 @@ package org.example.tpids2025g1demo1.models;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+
+@Entity
 public class SerieTemporal {
+    @Column()
     private boolean condicionAlarma;
+    @Column()
     private LocalDateTime fechaHoraInicioRegistroMuestras;
+    @Column()
     private LocalDateTime fechaHoraRegistro;
+    @Column()
     private String frecuenciaMuestreo; // Ver el tipo de dato
+    @ManyToOne
     private Estado estado;
+    @OneToMany
     private ArrayList<MuestraSismica> muestraSismica;
 
 

@@ -6,20 +6,40 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+
+@Entity
 public class EventoSismico {
+    @Column()
     private LocalDateTime fechaHoraFin;
+    @Column()
     private LocalDateTime fechaHoraOcurrencia;
+    @Column()
     private float latitudEpicentro;
+    @Column()
     private float latitudHipocentro;
+    @Column()
     private float longitudEpicentro;
+    @Column()
     private float longitudHipocentro;
+    @Column()
     private float valorMagnitud; //chequear
+    @ManyToOne
     private Estado estadoActual;
+    @OneToMany
     private ArrayList<CambioEstado> cambioEstado;
+    @ManyToOne
     private ClasificacionSismo clasificacion;
+    @ManyToOne
     private OrigenDeGeneracion origenGeneracion;
+    @ManyToOne
     private AlcanceSismo alcanceSismo;
+    @OneToMany
     private ArrayList<SerieTemporal> serieTemporal;
+    @ManyToOne
     private Empleado analistaSuperior;
 
     public EventoSismico() {

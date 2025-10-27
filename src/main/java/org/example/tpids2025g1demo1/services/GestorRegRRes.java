@@ -2,6 +2,9 @@ package org.example.tpids2025g1demo1.services;
 
 import org.example.tpids2025g1demo1.models.*;
 import org.example.tpids2025g1demo1.controllers.PantRegRRes;
+import org.example.tpids2025g1demo1.interfaces.IAgregado;
+import org.example.tpids2025g1demo1.interfaces.IIterador;
+import org.example.tpids2025g1demo1.iterators.IteradorEventosSismicos;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -12,7 +15,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
-public class GestorRegRRes {
+public class GestorRegRRes implements IAgregado{
 
     private ArrayList<EventoSismico> listaEventosSismicos;
     private ArrayList<Map<String, Object>> listaESNoRevisados=new ArrayList<>();
@@ -39,6 +42,9 @@ public class GestorRegRRes {
         this.sesion = sesion;
         this.listaEstados = listaEstados;
         this.sismografos = sismografos;
+    }
+    public IIterador crearIterador(Object[] elementos) {
+        return new IteradorEventosSismicos(elementos);
     }
 
     public void nuevaRevisionES(PantRegRRes pantalla){
@@ -74,15 +80,22 @@ public class GestorRegRRes {
     }
 
     public void buscarESNoRevisados(){ // Metodo para buscar los ES auto detectados que están pendientes de revisión
-        for (EventoSismico evento : listaEventosSismicos) { // Recorre todos los eventos sísmicos registrados
-            if (evento.esAutoDetectado() || evento.esPendienteDeRevision()){ // Chequea el estado del evento
+        // Pedimos un arreglo tipado EventoSismico[].Con toArray(new EventoSismico[0]) la lista crea y devuelve un arreglo del tamaño justo y del tipo correcto.
+        IIterador iterador = crearIterador(this.listaEventosSismicos.toArray(new EventoSismico[0]));
+        iterador.primero();
+        while (!iterador.haTerminado()) {
+            EventoSismico evento = (EventoSismico) iterador.actual();
+            if (evento != null) { // Chequea el estado del evento
                 Map<String, Object> diccionarioEvento = new HashMap<>(); // Nuevo diccionario que va a tener los eventos y sus datos
                 diccionarioEvento.put("evento", evento);
                 diccionarioEvento.put("datos", evento.getDatosPrincipales()); // Se espera que esto devuelva un Map
                 listaESNoRevisados.add(diccionarioEvento);
             }
+            iterador.siguiente();
         }
     }
+
+
 
     public void ordenarEventosSismicosPorFechaYHora() {
         this.listaESNoRevisados.sort((diccEvento1, diccEvento2) -> {
