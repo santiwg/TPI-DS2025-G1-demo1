@@ -4,14 +4,20 @@ import java.time.LocalDateTime;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
 
 @Entity
 public class EstacionSismologica {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
     @Column(unique = true)
     private String codigoEstacion;
-    @Column()
+    @Column(nullable = true)
     private String documentoCerficacionAdq;
-    @Column()
+    @Column(nullable = true)
     private LocalDateTime fechaSolicitudCertificacion;
     @Column()
     private float latitud;
@@ -19,7 +25,7 @@ public class EstacionSismologica {
     private float longitud;
     @Column()
     private String nombre;
-    @Column()
+    @Column(nullable = true)
     private int nroCertificacionAdquisicion;
 
     public EstacionSismologica(){}

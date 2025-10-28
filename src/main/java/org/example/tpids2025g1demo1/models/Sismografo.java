@@ -5,22 +5,30 @@ import java.util.ArrayList;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 
 @Entity
 public class Sismografo {
-    @Column()
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    @Column(nullable = true)//no debería poder ser null en realidad hay que ver como hacemos!!
     private LocalDateTime fechaAdquisicion;
     @Column(unique = true)
     private int identificadorSismografo;
-    @Column()
+    @Column(nullable = true) //no debería poder ser null en realidad hay que ver como hacemos!!
     private String nroSerie;
     @OneToMany
     private ArrayList<SerieTemporal> serieTemporal;
     @ManyToOne
     private EstacionSismologica estacionSismologica;
     @ManyToOne
+    @JoinColumn(nullable = true) //no debería poder ser null en realidad hay que ver como hacemos!!
     private Estado estadoActual;
     @OneToMany
     private ArrayList<CambioEstado> cambioEstado;
