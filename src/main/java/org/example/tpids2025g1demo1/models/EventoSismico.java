@@ -14,6 +14,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.CascadeType;
 
 @Entity
 public class EventoSismico {
@@ -36,8 +37,10 @@ public class EventoSismico {
     private float valorMagnitud; //chequear
     @ManyToOne
     private Estado estadoActual;
-    @OneToMany
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     private ArrayList<CambioEstado> cambioEstado;
+    //cascade = ALL: propaga al hijo las operaciones sobre el padre:
+    //persist/save: al guardar el EventoSismico, se insertan también los CambioEstado nuevos agregados a la lista.
     @ManyToOne
     private ClasificacionSismo clasificacion;
     @ManyToOne

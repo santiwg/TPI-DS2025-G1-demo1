@@ -2,8 +2,6 @@ package org.example.tpids2025g1demo1;
 
 import jakarta.annotation.PostConstruct;
 import org.example.tpids2025g1demo1.models.*;
-import org.example.tpids2025g1demo1.services.GestorRegRRes;
-import org.example.tpids2025g1demo1.controllers.PantRegRRes;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
@@ -196,13 +194,13 @@ public class DataInitializer {
         eventosSismicos.add(evento6);
 
         // Creo instancias del gestor y de la pantalla
-        GestorRegRRes gestor1 = new GestorRegRRes(eventosSismicos,sesionActual,listaEstados,sismografos);
+        /*GestorRegRRes gestor1 = new GestorRegRRes(eventosSismicos,sesionActual,listaEstados,sismografos);
         PantRegRRes pantalla = new PantRegRRes(gestor1);
 
         GestorRegRRes gestor2 = new GestorRegRRes(eventosSismicos,sesionActual,listaEstados,sismografos);
         PantRegRRes pantalla2 = new PantRegRRes(gestor2);
 
         GestorRegRRes gestor3 = new GestorRegRRes(eventosSismicos,sesionActual,listaEstados,sismografos);
-        PantRegRRes pantalla3 = new PantRegRRes(gestor3);
+        PantRegRRes pantalla3 = new PantRegRRes(gestor3);*/
     }
 }

@@ -13,7 +13,7 @@ import java.util.ArrayList;
 public class PantRegRRes extends JFrame {
     private GestorRegRRes gestor;
     private JButton opcRegRRevision;
-    private JComboBox eventosComboBox;
+    private JComboBox<String> eventosComboBox;
     private JTextField origentxt;
     private JTextField alcancetxt;
     private JTextField clasificaciontxt;
@@ -146,7 +146,7 @@ public class PantRegRRes extends JFrame {
     public void mostrarESParaSeleccion(ArrayList<String> eventosSismicos){
 
         // Crea un modelo para el comboBox
-        DefaultComboBoxModel <String> eventos = new DefaultComboBoxModel<>();
+    DefaultComboBoxModel<String> eventos = new DefaultComboBoxModel<>();
         for (String evento: eventosSismicos) { // Se recorren los eventos de la lista
             eventos.addElement(evento); // Agrega el evento al modelo
         }

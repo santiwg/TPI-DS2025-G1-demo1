@@ -1,7 +1,5 @@
 package org.example.tpids2025g1demo1.iterators;
 
-import java.util.ArrayList;
-
 import org.example.tpids2025g1demo1.interfaces.IIterador;
 import org.example.tpids2025g1demo1.models.EventoSismico; 
 

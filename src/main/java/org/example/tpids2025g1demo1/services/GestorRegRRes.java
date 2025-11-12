@@ -5,7 +5,12 @@ import org.example.tpids2025g1demo1.controllers.PantRegRRes;
 import org.example.tpids2025g1demo1.interfaces.IAgregado;
 import org.example.tpids2025g1demo1.interfaces.IIterador;
 import org.example.tpids2025g1demo1.iterators.IteradorEventosSismicos;
+import org.example.tpids2025g1demo1.repositories.EstadoRepository;
+import org.example.tpids2025g1demo1.repositories.EventoSismicoRepository;
+import org.example.tpids2025g1demo1.repositories.SesionRepository;
+import org.example.tpids2025g1demo1.repositories.SismografoRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 
@@ -37,18 +42,37 @@ public class GestorRegRRes implements IAgregado{
     private ArrayList<Sismografo> sismografos;
     private String seleccionResultado;
 
-    public GestorRegRRes(ArrayList<EventoSismico> listaEventosSismicos, Sesion sesion, ArrayList<Estado> listaEstados, ArrayList<Sismografo> sismografos) {
-        this.listaEventosSismicos = listaEventosSismicos;
-        this.sesion = sesion;
-        this.listaEstados = listaEstados;
-        this.sismografos = sismografos;
+    // Repositorios inyectados
+    private final EventoSismicoRepository eventoSismicoRepository;
+    private final SesionRepository sesionRepository;
+    private final EstadoRepository estadoRepository;
+    private final SismografoRepository sismografoRepository;
+
+    public GestorRegRRes(EventoSismicoRepository eventoSismicoRepository,
+                         SesionRepository sesionRepository,
+                         EstadoRepository estadoRepository,
+                         SismografoRepository sismografoRepository) {
+        this.eventoSismicoRepository = eventoSismicoRepository;
+        this.sesionRepository = sesionRepository;
+        this.estadoRepository = estadoRepository;
+        this.sismografoRepository = sismografoRepository;
     }
     public IIterador crearIterador(Object[] elementos) {
         return new IteradorEventosSismicos(elementos);
     }
 
+    @Transactional(readOnly = true)
+    @SuppressWarnings("unchecked")
     public void nuevaRevisionES(PantRegRRes pantalla){
         this.pantalla=pantalla;
+        // Cargar datos desde BD al inicio del CU
+        this.listaEventosSismicos = new ArrayList<>(this.eventoSismicoRepository.findAll());
+        this.listaEstados = new ArrayList<>(this.estadoRepository.findAll());
+        this.sismografos = new ArrayList<>(this.sismografoRepository.findAll());
+    // Obtener la última sesión abierta (sin fecha de cierre) desde el repositorio
+    this.sesion = this.sesionRepository
+        .findTopByFechaHoraCierreIsNullOrderByFechaHoraInicioDesc()
+        .orElse(null);
         this.buscarESNoRevisados();
 
         if (!listaESNoRevisados.isEmpty()){ // Verifica que haya eventos para revisar
@@ -79,6 +103,8 @@ public class GestorRegRRes implements IAgregado{
 
     }
 
+    
+
     public void buscarESNoRevisados(){ // Metodo para buscar los ES auto detectados que están pendientes de revisión
         // Pedimos un arreglo tipado EventoSismico[].Con toArray(new EventoSismico[0]) la lista crea y devuelve un arreglo del tamaño justo y del tipo correcto.
         IIterador iterador = crearIterador(this.listaEventosSismicos.toArray(new EventoSismico[0]));
@@ -97,6 +123,7 @@ public class GestorRegRRes implements IAgregado{
 
 
 
+    @SuppressWarnings("unchecked")
     public void ordenarEventosSismicosPorFechaYHora() {
         this.listaESNoRevisados.sort((diccEvento1, diccEvento2) -> {
             // Obtiene los datos del evento, que son un diccionario
@@ -112,6 +139,7 @@ public class GestorRegRRes implements IAgregado{
         });
     }
 
+    @SuppressWarnings("unchecked")
     public void tomarSeleccionES(String eventoSelecc){
         for (Map<String, Object> diccEvento : listaESNoRevisados) { // Busca el evento correspondiente en la lista de eventos no revisados
             Map<String, Object> datos = (Map<String, Object>) diccEvento.get("datos");
@@ -162,9 +190,12 @@ public class GestorRegRRes implements IAgregado{
         }
     }
 
+    @Transactional
     public void bloquearEventoSismico(){ // Bloquea el evento sismico seleccionado
         this.ultimoCambioDeEstado = this.eventoSismicoSeleccionado.revisar(fechaHoraActual, estadoBloqueadoEnRevision, empleadoLogueado);
         // Invoca el metodo para cambiar el estado del evento y almacena el cambio de estado que se crea
+        // Persistir el evento junto a su nuevo cambio de estado
+        this.eventoSismicoSeleccionado = this.eventoSismicoRepository.save(this.eventoSismicoSeleccionado);
     }
 
     public void tomarFechaHoraActual(){
@@ -227,13 +258,19 @@ public class GestorRegRRes implements IAgregado{
         }
     }
 
+    @Transactional
     public void rechazarEventoSismico(){ // Rechaza el evento sismico seleccionado
         this.eventoSismicoSeleccionado.rechazar(fechaHoraActual, estadoRechazado, empleadoLogueado,ultimoCambioDeEstado); // Llama al metodo rechazar()
+        // Persistir el evento junto a su nuevo cambio de estado
+        this.eventoSismicoSeleccionado = this.eventoSismicoRepository.save(this.eventoSismicoSeleccionado);
     }
 
+    @Transactional
     public void confirmarEventoSismico(){ // Confirma el evento sismico seleccionado
         this.eventoSismicoSeleccionado.confirmar(fechaHoraActual, estadoConfirmado, empleadoLogueado,ultimoCambioDeEstado); // Llama al metodo confirmar()
         this.notificarConfirmacionAInteresados(); // se notifica a los interesados de la confirmación de un evento sísmico
+        // Persistir el evento junto a su nuevo cambio de estado
+        this.eventoSismicoSeleccionado = this.eventoSismicoRepository.save(this.eventoSismicoSeleccionado);
     }
 
     public void notificarConfirmacionAInteresados(){
@@ -260,6 +297,7 @@ public class GestorRegRRes implements IAgregado{
 
     }
 
+    @SuppressWarnings("unchecked")
     public boolean validarDatosMinimos(){ // Valida que exista magnitud, alcance y origen de generación del evento y que se haya seleccionado una accion
         float magnitud = 0;
         for (Map<String, Object> diccEvento : listaESNoRevisados) {
