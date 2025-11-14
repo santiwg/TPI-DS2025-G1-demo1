@@ -12,6 +12,7 @@ import org.example.tpids2025g1demo1.repositories.SismografoRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.lang.reflect.Array;
 import java.time.LocalDateTime;
 
 import java.util.ArrayList;
@@ -63,7 +64,7 @@ public class GestorRegRRes implements IAgregado{
 
     @Transactional(readOnly = true)
     @SuppressWarnings("unchecked")
-    public void nuevaRevisionES(PantRegRRes pantalla){
+    public ArrayList<String> nuevaRevisionES(PantRegRRes pantalla){
         this.pantalla=pantalla;
         // Cargar datos desde BD al inicio del CU
         this.listaEventosSismicos = new ArrayList<>(this.eventoSismicoRepository.findAll());
@@ -95,10 +96,9 @@ public class GestorRegRRes implements IAgregado{
                     })
                     .collect(Collectors.toCollection(ArrayList::new));
 
-            pantalla.mostrarESParaSeleccion(datosEventos); // Muestra los ES en pantalla para que el usuario seleccione uno
+            return datosEventos; // Muestra los ES en pantalla para que el usuario seleccione uno
         }else { // Si no hay ES no revisados
-            pantalla.informarNoHayESNoRevisados();
-            this.cancelarCU();
+            return null;
         }
 
     }
@@ -140,7 +140,7 @@ public class GestorRegRRes implements IAgregado{
     }
 
     @SuppressWarnings("unchecked")
-    public void tomarSeleccionES(String eventoSelecc){
+    public ArrayList<String> tomarSeleccionES(String eventoSelecc){
         for (Map<String, Object> diccEvento : listaESNoRevisados) { // Busca el evento correspondiente en la lista de eventos no revisados
             Map<String, Object> datos = (Map<String, Object>) diccEvento.get("datos");
             String datosStr = String.format( // Arma el texto del evento tal como se muestra en pantalla
@@ -232,7 +232,7 @@ public class GestorRegRRes implements IAgregado{
         }
     }
 
-    public void tomarSeleccionResultado(String seleccion){ //toma la acción a realizar y lleva a cabo el flujo correspondiente
+    public String tomarSeleccionResultado(String seleccion, String evento){ //toma la acción a realizar y lleva a cabo el flujo correspondiente
         this.seleccionResultado = seleccion;
         if (this.validarDatosMinimos()){ //valida que se tengan los datos mínimos para poder registrar el resultado
             this.tomarFechaHoraActual();

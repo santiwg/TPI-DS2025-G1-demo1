@@ -10,9 +10,9 @@ import java.util.ArrayList;
 
 @RestController
 @RequestMapping("/reg-resultado-revision")
-public class PantRegRRes extends JFrame {
+public class PantRegRRes {
     private GestorRegRRes gestor;
-    private JButton opcRegRRevision;
+    /* private JButton opcRegRRevision;
     private JComboBox<String> eventosComboBox;
     private JTextField origentxt;
     private JTextField alcancetxt;
@@ -27,10 +27,13 @@ public class PantRegRRes extends JFrame {
     private JButton verMapaButton;
     private JButton modificarDatosButton;
     private JLabel seleccioneResultadoLabel;
-    private JPanel panelPrincipal;
+    private JPanel panelPrincipal;*/
 
     public PantRegRRes(GestorRegRRes gestor) {
         this.gestor = gestor;
+        
+
+        /*
         setContentPane(panelPrincipal); // Establece el panel principal como el contenido de la ventana
         setTitle("Registrar Resultado de manual"); // Asigna el título a la ventana
         setSize(1000,600); // Configura el tamaño de la ventana
@@ -54,7 +57,6 @@ public class PantRegRRes extends JFrame {
         verMapaButton.setVisible(false);
         modificarDatosButton.setVisible(false);
         seleccioneResultadoLabel.setVisible(false);
-
         //Modifica el evento de cierre de la ventana
         addWindowListener(new java.awt.event.WindowAdapter() {
             @Override
@@ -65,8 +67,7 @@ public class PantRegRRes extends JFrame {
         // Al presionar el botón de Registrar Resultado Revisión, se ejecuta opcRegResultadoES() comenzando la ejecución del CU
         opcRegRRevision.addActionListener(e -> {
             opcRegResultadoES();
-        });
-
+        }); 
         // Agrega ActionListener para tomar la selección de un evento
         seleccionarButton.addActionListener(new ActionListener() {
             @Override
@@ -112,18 +113,50 @@ public class PantRegRRes extends JFrame {
             public void actionPerformed(ActionEvent e) {
                 tomarSolicitudVerMapa();
             }
-        });
+        });*/
+
+        
     }
 
     // Inicia el registro del resultado al seleccionarse la opción correspondiente
     @GetMapping("/norevisados")
-     public void opcRegResultadoES(){
-        this.abrirPantalla();
-        gestor.nuevaRevisionES(this); // Se pasa así mismo como parámetro para que el gestor puede luego invocar su comportamiento
+     public ArrayList<String> opcRegResultadoES(){
+        return gestor.nuevaRevisionES(this); // Se pasa así mismo como parámetro para que el gestor puede luego invocar su comportamiento
     }
 
+
+    // Pasa el evento sísmico seleccionado al gestor
+    @PostMapping("/seleccion-evento")
+    public void tomarSeleccionES(String evento){
+        gestor.tomarSeleccionES(evento);
+    }
+
+    
+    
+    @PostMapping("/seleccion-resultado")
+    // Toma la elección del resultado y la pasa al gestor
+    public String tomarSeleccionResultado(String seleccion, String evento){
+        /*JOptionPane.showMessageDialog(this,"Resultado Registrado!"); // Muestra un mensaje
+        dispose(); // Cierra la ventana */
+        return gestor.tomarSeleccionResultado(seleccion, evento);
+    }
+
+    
+    /*
+    // Cierra la ventana y cancela la ejecución del CU
+    @PostMapping("/cancelacion")
+    public void tomarCancelacion(){
+        dispose();
+        gestor.cancelarCU();
+    }
+
+    // Informa al usuario la situación con un mensaje en pantalla
+    public void informarNoHayESNoRevisados(){
+        JOptionPane.showMessageDialog(this, "No hay sismos auto detectados que aún no han sido revisados");
+        this.dispose(); // Cierra la ventana
+    } */
     // "Abre" la pantalla para registrar el resultado de la revisión
-    public void abrirPantalla(){
+    /*public void abrirPantalla(){
         //se oculta el botón para iniciar el CU y se muestran los demás componentes
         this.opcRegRRevision.setVisible(false);
         this.eventosComboBox.setVisible(true);
@@ -141,8 +174,12 @@ public class PantRegRRes extends JFrame {
         this.delegarAExpertoButton.setVisible(true);
         this.seleccioneResultadoLabel.setVisible(true);
     }
-
-    // Carga y muestra en el comboBox los eventos sísmicos
+    // Responde a la solicitud de moficación de datos
+    @PutMapping("/datos-evento")
+    public void tomarSolicitudModificacionDatos(){
+        JOptionPane.showMessageDialog(this,"Cargando..."); // Muestra un mensaje
+    }
+         // Carga y muestra en el comboBox los eventos sísmicos
     public void mostrarESParaSeleccion(ArrayList<String> eventosSismicos){
 
         // Crea un modelo para el comboBox
@@ -153,12 +190,12 @@ public class PantRegRRes extends JFrame {
         eventosComboBox.setModel(eventos); // Asigna el modelo al comboBox
     }
 
-    // Pasa el evento sísmico seleccionado al gestor
-    @PostMapping("/seleccion-evento")
-    public void tomarSeleccionES(String evento){
-        gestor.tomarSeleccionES(evento);
+    // Responde a la solicitud de ver mapa
+    @PostMapping("/visualizar-mapa")
+    public void tomarSolicitudVerMapa(){
+        JOptionPane.showMessageDialog(this,"Cargando mapa..."); // Muestra un mensaje
     }
-
+    
     // Se muestran los datos principales del evento seleccionado
     public void mostrarDatosEventoSismico(String nombreAlcance, String nombreOrigenGeneracion, String nombreClasificacion){
         this.alcancetxt.setText(nombreAlcance);
@@ -183,36 +220,6 @@ public class PantRegRRes extends JFrame {
         this.confirmarButton.setEnabled(true);
         this.delegarAExpertoButton.setEnabled(true);
     }
-
-    // Cierra la ventana y cancela la ejecución del CU
-    @PostMapping("/cancelacion")
-    public void tomarCancelacion(){
-        dispose();
-        gestor.cancelarCU();
-    }
-
-    // Informa al usuario la situación con un mensaje en pantalla
-    public void informarNoHayESNoRevisados(){
-        JOptionPane.showMessageDialog(this, "No hay sismos auto detectados que aún no han sido revisados");
-        this.dispose(); // Cierra la ventana
-    }
-    @PostMapping("/seleccion-resultado")
-    // Toma la elección del resultado y la pasa al gestor
-    public void tomarSeleccionResultado(String seleccion){
-        JOptionPane.showMessageDialog(this,"Resultado Registrado!"); // Muestra un mensaje
-        dispose(); // Cierra la ventana
-        gestor.tomarSeleccionResultado(seleccion);
-    }
-
-    // Responde a la solicitud de moficación de datos
-    @PutMapping("/datos-evento")
-    public void tomarSolicitudModificacionDatos(){
-        JOptionPane.showMessageDialog(this,"Cargando..."); // Muestra un mensaje
-    }
-
-    // Responde a la solicitud de ver mapa
-    @PostMapping("/visualizar-mapa")
-    public void tomarSolicitudVerMapa(){
-        JOptionPane.showMessageDialog(this,"Cargando mapa..."); // Muestra un mensaje
-    }
+    
+    */
 }
