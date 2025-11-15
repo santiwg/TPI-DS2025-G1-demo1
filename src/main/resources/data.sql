@@ -1,18 +1,14 @@
 -- Dev seed script: wipes and reseeds without duplicates
 -- WARNING: destructive; only use in development
 
+
 TRUNCATE TABLE
-  evento_sismico,
-  evento_sismico_cambio_estado,
-  evento_sismico_serie_temporal,
+  detalle_muestra_sismica,
+  muestra_sismica,
+  serie_temporal,
   cambio_estado,
   estado,
-  serie_temporal,
-  serie_temporal_muestra_sismica,
-  muestra_sismica,
-  muestra_sismica_detalle_muestra_sismica,
-  detalle_muestra_sismica,
-  sismografo_serie_temporal,
+  evento_sismico,
   sismografo,
   estacion_sismologica,
   sesion,
@@ -159,14 +155,23 @@ INSERT INTO sesion (fecha_hora_inicio, fecha_hora_cierre, usuario_id) VALUES
   ('2025-06-20 10:00:00', NULL, (SELECT id FROM usuario WHERE nombre_usuario='miltong'));
 
 -- 9) Catálogos: Alcance, Origen, Clasificacion
+-- Alcance: locales, regionales, telesismos
 INSERT INTO alcance_sismo (descripcion, nombre) VALUES
-  ('Hasta 1000km', 'Regional');
+  ('Hasta 100 km', 'Local'),
+  ('Hasta 1000 km', 'Regional'),
+  ('Mas de 1000 km', 'Telesismo');
 
+-- Origen de generación: interplaca, volcánico, explosiones
 INSERT INTO origen_de_generacion (nombre, descripcion) VALUES
-  ('Explosiones en minas', 'Sismo provocado por explosiones de minas');
+  ('Interplaca', 'Sismo por interacción de placas tectonicas'),
+  ('Volcanico', 'Sismo asociado a actividad volcanica'),
+  ('Explosion en minas', 'Sismo provocado por explosiones de minas');
 
+-- Clasificación por profundidad: superficiales, intermedios, profundos
 INSERT INTO clasificacion_sismo (km_profundidad_desde, km_profundidad_hasta, nombre) VALUES
-  (61.0, 300.0, 'Intermedios');
+  (0.0, 60.0, 'Superficial'),
+  (61.0, 300.0, 'Intermedio'),
+  (301.0, 650.0, 'Profundo');
 
 -- 10) Cambios de estado (6)
 INSERT INTO cambio_estado (fecha_hora_fin, fecha_hora_inicio, estado_id, empleado_responsable_id) VALUES
@@ -182,36 +187,36 @@ INSERT INTO evento_sismico (
   fecha_hora_fin, fecha_hora_ocurrencia, latitud_epicentro, latitud_hipocentro, longitud_epicentro, longitud_hipocentro, valor_magnitud,
   estado_actual_id, clasificacion_id, origen_generacion_id, alcance_sismo_id, analista_superior_id
 ) VALUES
-  (NULL, '2025-06-16 15:58:20', -21.5, -34.5, -21.7, -34.6, 7.0,
+  (NULL, '2025-06-16 15:58:21', -21.53, -34.47, -21.72, -34.63, 6.9,
    (SELECT id FROM estado WHERE ambito='EventoSismico' AND nombre_estado='BloqueadoEnRevision'),
-   (SELECT id FROM clasificacion_sismo WHERE nombre='Intermedios'),
-   (SELECT id FROM origen_de_generacion WHERE nombre='Explosiones en minas'),
+   (SELECT id FROM clasificacion_sismo WHERE nombre='Intermedio'),
+   (SELECT id FROM origen_de_generacion WHERE nombre='Interplaca'),
    (SELECT id FROM alcance_sismo WHERE nombre='Regional'), NULL),
-  (NULL, '2025-06-17 15:58:20', -21.5, -34.5, -21.7, -34.6, 7.0,
+  (NULL, '2025-06-17 15:59:20', -22.10, -35.05, -22.30, -35.20, 5.8,
    (SELECT id FROM estado WHERE ambito='EventoSismico' AND nombre_estado='Rechazado'),
-   (SELECT id FROM clasificacion_sismo WHERE nombre='Intermedios'),
-   (SELECT id FROM origen_de_generacion WHERE nombre='Explosiones en minas'),
-   (SELECT id FROM alcance_sismo WHERE nombre='Regional'), NULL),
-  (NULL, '2025-06-16 15:58:20', -21.5, -34.5, -21.7, -34.6, 7.0,
+   (SELECT id FROM clasificacion_sismo WHERE nombre='Superficial'),
+   (SELECT id FROM origen_de_generacion WHERE nombre='Explosion en minas'),
+   (SELECT id FROM alcance_sismo WHERE nombre='Local'), NULL),
+  (NULL, '2025-06-16 16:58:21', -24.80, -33.90, -24.60, -34.10, 7.3,
    (SELECT id FROM estado WHERE ambito='EventoSismico' AND nombre_estado='AutoDetectado'),
-   (SELECT id FROM clasificacion_sismo WHERE nombre='Intermedios'),
-   (SELECT id FROM origen_de_generacion WHERE nombre='Explosiones en minas'),
-   (SELECT id FROM alcance_sismo WHERE nombre='Regional'), NULL),
-  (NULL, '2025-06-15 15:58:20', -23.6, -37.8, -21.9, -30.6, 8.0,
+   (SELECT id FROM clasificacion_sismo WHERE nombre='Profundo'),
+   (SELECT id FROM origen_de_generacion WHERE nombre='Volcanico'),
+   (SELECT id FROM alcance_sismo WHERE nombre='Telesismo'), NULL),
+  (NULL, '2025-06-15 15:54:20', -23.60, -37.80, -21.90, -30.60, 8.2,
    (SELECT id FROM estado WHERE ambito='EventoSismico' AND nombre_estado='PendienteDeRevision'),
-   (SELECT id FROM clasificacion_sismo WHERE nombre='Intermedios'),
-   (SELECT id FROM origen_de_generacion WHERE nombre='Explosiones en minas'),
-   (SELECT id FROM alcance_sismo WHERE nombre='Regional'), NULL),
-  (NULL, '2025-06-18 15:58:20', -21.5, -34.5, -21.7, -34.6, 7.0,
+   (SELECT id FROM clasificacion_sismo WHERE nombre='Superficial'),
+   (SELECT id FROM origen_de_generacion WHERE nombre='Interplaca'),
+   (SELECT id FROM alcance_sismo WHERE nombre='Local'), NULL),
+  (NULL, '2025-06-18 16:51:20', -20.45, -32.75, -20.55, -32.85, 6.1,
    (SELECT id FROM estado WHERE ambito='EventoSismico' AND nombre_estado='Confirmado'),
-   (SELECT id FROM clasificacion_sismo WHERE nombre='Intermedios'),
-   (SELECT id FROM origen_de_generacion WHERE nombre='Explosiones en minas'),
+   (SELECT id FROM clasificacion_sismo WHERE nombre='Intermedio'),
+   (SELECT id FROM origen_de_generacion WHERE nombre='Explosion en minas'),
    (SELECT id FROM alcance_sismo WHERE nombre='Regional'), NULL),
-  (NULL, '2025-06-19 15:58:20', -21.5, -34.5, -21.7, -34.6, 7.0,
+  (NULL, '2025-06-19 15:58:20', -22.95, -36.25, -22.70, -36.10, 7.8,
    (SELECT id FROM estado WHERE ambito='EventoSismico' AND nombre_estado='Rechazado'),
-   (SELECT id FROM clasificacion_sismo WHERE nombre='Intermedios'),
-   (SELECT id FROM origen_de_generacion WHERE nombre='Explosiones en minas'),
-   (SELECT id FROM alcance_sismo WHERE nombre='Regional'), NULL);
+   (SELECT id FROM clasificacion_sismo WHERE nombre='Profundo'),
+   (SELECT id FROM origen_de_generacion WHERE nombre='Volcanico'),
+   (SELECT id FROM alcance_sismo WHERE nombre='Telesismo'), NULL);
 
 -- 11.1) Relación evento -> series (FK en serie_temporal) asigna 2 por evento
 UPDATE serie_temporal SET evento_sismico_id = (SELECT id FROM evento_sismico ORDER BY id LIMIT 1 OFFSET 0)
