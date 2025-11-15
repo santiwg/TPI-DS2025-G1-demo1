@@ -14,9 +14,12 @@ public class CorsConfig {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/**") // aplica a todos los endpoints
-                        .allowedOrigins("http://localhost:4200") // origen permitido
-                        .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS") // métodos permitidos
-                        .allowedHeaders("*"); // cabeceras permitidas
+                        // Aceptar cualquier origen (útil para Postman/Thunder y ambientes locales)
+                        .allowedOriginPatterns("*")
+                        .allowedMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS") // métodos permitidos
+                        .allowedHeaders("*") // cabeceras permitidas
+                        .allowCredentials(true)
+                        .maxAge(3600); // cache del preflight (OPTIONS)
             }
         };
     }

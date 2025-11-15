@@ -16,6 +16,9 @@ import java.lang.reflect.Array;
 import java.time.LocalDateTime;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -53,28 +56,38 @@ public class GestorRegRRes implements IAgregado{
                          SesionRepository sesionRepository,
                          EstadoRepository estadoRepository,
                          SismografoRepository sismografoRepository) {
+        // Inyección de dependencias de los repositorios necesarios
         this.eventoSismicoRepository = eventoSismicoRepository;
         this.sesionRepository = sesionRepository;
         this.estadoRepository = estadoRepository;
         this.sismografoRepository = sismografoRepository;
+        
+        //cargo desde la db los datos que no cambian durante el CU (precargados) y se usan en varias partes
+        
+        this.listaEstados = new ArrayList<>(this.estadoRepository.findAll());
+        // Obtener la última sesión abierta (sin fecha de cierre) desde el repositorio
+        this.sesion = this.sesionRepository
+        .findTopByFechaHoraCierreIsNullOrderByFechaHoraInicioDesc()
+        .orElse(null);
+        this.buscarESNoRevisados();
+        
+
     }
     public IIterador crearIterador(Object[] elementos) {
         return new IteradorEventosSismicos(elementos);
+        //Método polimórfico definido por la interfaz IAgregado
+        //crea una instancia de un iterador concreto que permitirá recorrer eventos sísmicos
     }
 
     @Transactional(readOnly = true)
     @SuppressWarnings("unchecked")
-    public ArrayList<String> nuevaRevisionES(PantRegRRes pantalla){
-        this.pantalla=pantalla;
-        // Cargar datos desde BD al inicio del CU
+    public List<String> nuevaRevisionES(){
+        
+        // Cargar datos desde BD 
         this.listaEventosSismicos = new ArrayList<>(this.eventoSismicoRepository.findAll());
-        this.listaEstados = new ArrayList<>(this.estadoRepository.findAll());
-        this.sismografos = new ArrayList<>(this.sismografoRepository.findAll());
-    // Obtener la última sesión abierta (sin fecha de cierre) desde el repositorio
-    this.sesion = this.sesionRepository
-        .findTopByFechaHoraCierreIsNullOrderByFechaHoraInicioDesc()
-        .orElse(null);
+        
         this.buscarESNoRevisados();
+    
 
         if (!listaESNoRevisados.isEmpty()){ // Verifica que haya eventos para revisar
             this.ordenarEventosSismicosPorFechaYHora(); // Ordena los eventos por fecha y hora
@@ -98,7 +111,7 @@ public class GestorRegRRes implements IAgregado{
 
             return datosEventos; // Muestra los ES en pantalla para que el usuario seleccione uno
         }else { // Si no hay ES no revisados
-            return null;
+            return Collections.emptyList(); // Devuelve una lista vacía
         }
 
     }
@@ -140,7 +153,7 @@ public class GestorRegRRes implements IAgregado{
     }
 
     @SuppressWarnings("unchecked")
-    public ArrayList<String> tomarSeleccionES(String eventoSelecc){
+    public List<String> tomarSeleccionES(String eventoSelecc){
         for (Map<String, Object> diccEvento : listaESNoRevisados) { // Busca el evento correspondiente en la lista de eventos no revisados
             Map<String, Object> datos = (Map<String, Object>) diccEvento.get("datos");
             String datosStr = String.format( // Arma el texto del evento tal como se muestra en pantalla
@@ -169,15 +182,15 @@ public class GestorRegRRes implements IAgregado{
             this.buscarDatosEventoSismico(); // Extrae los datos del evento que necesita mostrar en pantalla
 
             // Muestra en la pantalla los datos principales del evento
-            pantalla.mostrarDatosEventoSismico(this.nombreAlcance,this.nombreOrigenGeneracion,this.nombreClasificacion);
+            
 
             this.buscarDatosSeriesTemporales(); // Busca los datos necesarios para generar la gráfica del sismograma
 
             this.llamarCUGenerarSismograma(); // instancia al caso de uso que genera el sismograma (CU GenerarSismograma)
 
-            pantalla.habilitarOpcVerMapa();
-            pantalla.habilitarOpcModificarDatosES();
-            pantalla.pedirSeleccionResultadoEvento();
+            return Arrays.asList(this.nombreAlcance, this.nombreClasificacion, this.nombreOrigenGeneracion);
+            
+            
     }
 
     public void buscarEstadoBloqueadoEnRev(){
@@ -249,12 +262,14 @@ public class GestorRegRRes implements IAgregado{
                     // No se implementa
                     break;
                 default:
-                    throw new IllegalArgumentException("Resultado inválido: " + seleccionResultado); // Si el resultado seleccionado es invalido, lo informa
+                    throw new IllegalArgumentException("Error: Resultado inválido: " + seleccionResultado); // Si el resultado seleccionado es invalido, lo informa
             }
-            this.finCU();
+            return "El evento sismico ha sido " + seleccionResultado.toLowerCase() + " correctamente.";
+            
 
         }else{
-            // No se implementa
+            //Este flujo no se implementa completo, se pone un retorno para cumplir con la signatura del método.
+            return "Error: No se pueden registrar los datos del evento sismico seleccionado. Faltan datos mínimos.";
         }
     }
 
@@ -277,25 +292,7 @@ public class GestorRegRRes implements IAgregado{
         // No se implementa
     }
 
-    public void cancelarCU(){ // Se "destruye" el gestor dando valor nulo a todos sus atributos
-        this.listaEventosSismicos=null;
-        this.listaESNoRevisados=null;
-        this.eventoSismicoSeleccionado=null;
-        this.estadoRechazado=null;
-        this.listaDatosSeriesTemporales=null;
-        this.sesion=null;
-        this.empleadoLogueado=null;
-        this.listaEstados=null;
-        this.estadoBloqueadoEnRevision=null;
-        this.fechaHoraActual=null;
-        this.pantalla=null;
-        this.nombreAlcance=null;
-        this.nombreOrigenGeneracion=null;
-        this.nombreClasificacion=null;
-        this.ultimoCambioDeEstado=null;
-        this.sismografos=null;
-
-    }
+    
 
     @SuppressWarnings("unchecked")
     public boolean validarDatosMinimos(){ // Valida que exista magnitud, alcance y origen de generación del evento y que se haya seleccionado una accion
@@ -314,31 +311,17 @@ public class GestorRegRRes implements IAgregado{
     }
 
     public void buscarDatosSeriesTemporales(){
+        // Cargar sismografos desde BD 
+        this.sismografos = new ArrayList<>(this.sismografoRepository.findAll());
+        
+        // solicita y almacena los datos de las series temporales del evento
         this.listaDatosSeriesTemporales=eventoSismicoSeleccionado.buscarDatosSeriesTemporales(sismografos);
-    } // solicita y almacena los datos de las series temporales del evento
+    } 
 
     public void llamarCUGenerarSismograma(){
         // No se implementa
     }
 
-    public void finCU(){ // Se "destruye" el gestor dando valor nulo a todos sus atributos
-        this.listaEventosSismicos=null;
-        this.listaESNoRevisados=null;
-        this.eventoSismicoSeleccionado=null;
-        this.estadoRechazado=null;
-        this.listaDatosSeriesTemporales=null;
-        this.sesion=null;
-        this.empleadoLogueado=null;
-        this.listaEstados=null;
-        this.estadoBloqueadoEnRevision=null;
-        this.fechaHoraActual=null;
-        this.pantalla=null;
-        this.nombreAlcance=null;
-        this.nombreOrigenGeneracion=null;
-        this.nombreClasificacion=null;
-        this.ultimoCambioDeEstado=null;
-        this.sismografos=null;
-    }
 
     @Override
     public String toString() {
@@ -361,4 +344,44 @@ public class GestorRegRRes implements IAgregado{
                 ", sismografos=" + sismografos +
                 '}';
     } // Muestra el valor de los atributos del Gestor
+
+    /*Se quitan como parte del rediseño, ya que ahora el gestor es un singletOn y no se debe destruir
+     public void finCU(){ // Se "destruye" el gestor dando valor nulo a todos sus atributos
+        this.listaEventosSismicos=null;
+        this.listaESNoRevisados=null;
+        this.eventoSismicoSeleccionado=null;
+        this.estadoRechazado=null;
+        this.listaDatosSeriesTemporales=null;
+        this.sesion=null;
+        this.empleadoLogueado=null;
+        this.listaEstados=null;
+        this.estadoBloqueadoEnRevision=null;
+        this.fechaHoraActual=null;
+        this.pantalla=null;
+        this.nombreAlcance=null;
+        this.nombreOrigenGeneracion=null;
+        this.nombreClasificacion=null;
+        this.ultimoCambioDeEstado=null;
+        this.sismografos=null;
+    }
+        public void cancelarCU(){ // Se "destruye" el gestor dando valor nulo a todos sus atributos
+        this.listaEventosSismicos=null;
+        this.listaESNoRevisados=null;
+        this.eventoSismicoSeleccionado=null;
+        this.estadoRechazado=null;
+        this.listaDatosSeriesTemporales=null;
+        this.sesion=null;
+        this.empleadoLogueado=null;
+        this.listaEstados=null;
+        this.estadoBloqueadoEnRevision=null;
+        this.fechaHoraActual=null;
+        this.pantalla=null;
+        this.nombreAlcance=null;
+        this.nombreOrigenGeneracion=null;
+        this.nombreClasificacion=null;
+        this.ultimoCambioDeEstado=null;
+        this.sismografos=null;
+
+    }
+     */
 }
