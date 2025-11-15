@@ -161,12 +161,11 @@ public class EventoSismico {
         this.buscarUltimoEstado(fechaHoraInicio); // Busca el ultimo CambioEstado
         CambioEstado nuevoEstado = this.crearCambioEstado(fechaHoraInicio, estado, empleadoLogueado); // Crea una nueva instancia de CambioEstado
         this.setEstadoActual(estado); // Asigna el nuevo estado actual
- // Devuelve el cambio de estado para que el gestor lo almacene y posteriormente no se tenga que buscar.
-    }
+  }
 
     public void rechazar(LocalDateTime fechaHoraInicio, Estado estado, Empleado empleadoLogueado) { // Pone fin al ultimo cambio de estado y crea uno
-        this.buscarUltimoEstado(fechaHoraInicio); // Busca el ultimo CambioEstado
-        this.crearCambioEstado(fechaHoraInicio, estado, empleadoLogueado); // Crea un nuevo cambio de estado, lo hace de nuevo para no depender de peticiones anteriores
+        this.buscarUltimoEstado(fechaHoraInicio); // Busca el ultimo CambioEstado, lo hace de nuevo para no depender de peticiones anteriores
+        this.crearCambioEstado(fechaHoraInicio, estado, empleadoLogueado); // Crea un nuevo cambio de estado
         this.setEstadoActual(estado); // Asigna el nuevo estado acutal
     }
 
