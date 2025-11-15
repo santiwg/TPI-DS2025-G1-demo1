@@ -330,43 +330,4 @@ public class GestorRegRRes implements IAgregado{
                 '}';
     } // Muestra el valor de los atributos del Gestor
 
-    /*Se quitan como parte del rediseño, ya que ahora el gestor es un singletOn y no se debe destruir
-     public void finCU(){ // Se "destruye" el gestor dando valor nulo a todos sus atributos
-        this.listaEventosSismicos=null;
-        this.listaESNoRevisados=null;
-        this.eventoSismicoSeleccionado=null;
-        this.estadoRechazado=null;
-        this.listaDatosSeriesTemporales=null;
-        this.sesion=null;
-        this.empleadoLogueado=null;
-        this.listaEstados=null;
-        this.estadoBloqueadoEnRevision=null;
-        this.fechaHoraActual=null;
-        this.pantalla=null;
-        this.nombreAlcance=null;
-        this.nombreOrigenGeneracion=null;
-        this.nombreClasificacion=null;
-        this.ultimoCambioDeEstado=null;
-        this.sismografos=null;
-    }
-        public void cancelarCU(){ // Se "destruye" el gestor dando valor nulo a todos sus atributos
-        this.listaEventosSismicos=null;
-        this.listaESNoRevisados=null;
-        this.eventoSismicoSeleccionado=null;
-        this.estadoRechazado=null;
-        this.listaDatosSeriesTemporales=null;
-        this.sesion=null;
-        this.empleadoLogueado=null;
-        this.listaEstados=null;
-        this.estadoBloqueadoEnRevision=null;
-        this.fechaHoraActual=null;
-        this.pantalla=null;
-        this.nombreAlcance=null;
-        this.nombreOrigenGeneracion=null;
-        this.nombreClasificacion=null;
-        this.ultimoCambioDeEstado=null;
-        this.sismografos=null;
-
-    }
-     */
 }

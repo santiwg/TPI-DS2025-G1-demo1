@@ -1,18 +1,14 @@
 -- Dev seed script: wipes and reseeds without duplicates
 -- WARNING: destructive; only use in development
 
+
 TRUNCATE TABLE
-  evento_sismico,
-  evento_sismico_cambio_estado,
-  evento_sismico_serie_temporal,
+  detalle_muestra_sismica,
+  muestra_sismica,
+  serie_temporal,
   cambio_estado,
   estado,
-  serie_temporal,
-  serie_temporal_muestra_sismica,
-  muestra_sismica,
-  muestra_sismica_detalle_muestra_sismica,
-  detalle_muestra_sismica,
-  sismografo_serie_temporal,
+  evento_sismico,
   sismografo,
   estacion_sismologica,
   sesion,
