@@ -55,4 +55,24 @@ public interface EventoSismicoRepository extends JpaRepository<EventoSismico, Lo
 	    "serieTemporal"
     })
     List<EventoSismico> findAllBy();
+
+	// Convenience: localizar un evento por la cadena formateada mostrada en la UI
+	default Optional<EventoSismico> findByFormattedString(String formatted) {
+		return this.findAll().stream()
+			.filter(e -> formatted.equals(String.format(
+					"fechaHoraOcurrencia=%s, latitudEpicentro=%.2f, latitudHipocentro=%.2f, longitudEpicentro=%.2f, longitudHipocentro=%.2f, valorMagnitud=%.1f",
+					e.getFechaHoraOcurrencia(),
+					e.getLatitudEpicentro(),
+					e.getLatitudHipocentro(),
+					e.getLongitudEpicentro(),
+					e.getLongitudHipocentro(),
+					e.getValorMagnitud()
+			)))
+			.findFirst();
+	}
+
+	// Variante que devuelve el grafo completo ya cargado a partir de la cadena formateada
+	default Optional<EventoSismico> fetchCompleteByFormattedString(String formatted) {
+		return findByFormattedString(formatted).flatMap(this::fetchComplete);
+	}
 }

@@ -30,7 +30,7 @@ public class GestorRegRRes implements IAgregado{
 
     private ArrayList<EventoSismico> listaEventosSismicos;
     private ArrayList<Map<String, Object>> listaESNoRevisados=new ArrayList<>();
-    // La lista de eventos será un array de diccionarios, cada uno de los cuales tendrá evento y datos
+    // Lista de diccionarios de datos del evento (sin almacenar el objeto EventoSismico)
     private EventoSismico eventoSismicoSeleccionado;
     private Estado estadoRechazado;
     private Estado estadoConfirmado;
@@ -44,7 +44,6 @@ public class GestorRegRRes implements IAgregado{
     private String nombreAlcance;
     private String nombreOrigenGeneracion;
     private String nombreClasificacion;
-    private CambioEstado ultimoCambioDeEstado;
     private ArrayList<Sismografo> sismografos;
     private String seleccionResultado;
 
@@ -89,21 +88,16 @@ public class GestorRegRRes implements IAgregado{
             this.ordenarEventosSismicosPorFechaYHora(); // Ordena los eventos por fecha y hora
             // Arma un array con los datos de los eventos formateados para pasarlo a la pantalla
             ArrayList<String> datosEventos = listaESNoRevisados.stream()
-                    .map(diccEvento -> {
-                        // Obtiene el diccionario de datos del evento y le hace un toString
-                        Map<String, Object> datos = (Map<String, Object>) diccEvento.get("datos");
-                        String datosStr = String.format(
-                                "fechaHoraOcurrencia=%s, latitudEpicentro=%.2f, latitudHipocentro=%.2f, longitudEpicentro=%.2f, longitudHipocentro=%.2f, valorMagnitud=%.1f",
-                                datos.get("fechaHoraOcurrencia"),
-                                datos.get("latitudEpicentro"),
-                                datos.get("latitudHipocentro"),
-                                datos.get("longitudEpicentro"),
-                                datos.get("longitudHipocentro"),
-                                datos.get("valorMagnitud")
-                        );
-                        return datosStr;
-                    })
-                    .collect(Collectors.toCollection(ArrayList::new));
+                .map(diccDatos -> String.format(
+                    "fechaHoraOcurrencia=%s, latitudEpicentro=%.2f, latitudHipocentro=%.2f, longitudEpicentro=%.2f, longitudHipocentro=%.2f, valorMagnitud=%.1f",
+                    diccDatos.get("fechaHoraOcurrencia"),
+                    diccDatos.get("latitudEpicentro"),
+                    diccDatos.get("latitudHipocentro"),
+                    diccDatos.get("longitudEpicentro"),
+                    diccDatos.get("longitudHipocentro"),
+                    diccDatos.get("valorMagnitud")
+                ))
+                .collect(Collectors.toCollection(ArrayList::new));
 
             return datosEventos; // Muestra los ES en pantalla para que el usuario seleccione uno
         }else { // Si no hay ES no revisados
@@ -121,10 +115,8 @@ public class GestorRegRRes implements IAgregado{
         while (!iterador.haTerminado()) {
             EventoSismico evento = (EventoSismico) iterador.actual();
             if (evento != null) { // Chequea el estado del evento
-                Map<String, Object> diccionarioEvento = new HashMap<>(); // Nuevo diccionario que va a tener los eventos y sus datos
-                diccionarioEvento.put("evento", evento);
-                diccionarioEvento.put("datos", evento.getDatosPrincipales()); // Se espera que esto devuelva un Map
-                listaESNoRevisados.add(diccionarioEvento);
+                // Guardamos directamente el diccionario de datos principales del evento
+                listaESNoRevisados.add(evento.getDatosPrincipales());
             }
             iterador.siguiente();
         }
@@ -134,16 +126,10 @@ public class GestorRegRRes implements IAgregado{
 
     @SuppressWarnings("unchecked")
     public void ordenarEventosSismicosPorFechaYHora() {
-        this.listaESNoRevisados.sort((diccEvento1, diccEvento2) -> {
-            // Obtiene los datos del evento, que son un diccionario
-            // Se debe hacer casteo porque estan definidos con tipo Object
-            Map<String, Object> datos1 = (Map<String, Object>) diccEvento1.get("datos");
-            Map<String, Object> datos2 = (Map<String, Object>) diccEvento2.get("datos");
-
-            // Obtengo la fecha de cada evento
+        this.listaESNoRevisados.sort((datos1, datos2) -> {
+            // 'datos1' y 'datos2' ya son los diccionarios de datos del evento
             LocalDateTime fecha1 = (LocalDateTime) datos1.get("fechaHoraOcurrencia");
             LocalDateTime fecha2 = (LocalDateTime) datos2.get("fechaHoraOcurrencia");
-
             return fecha2.compareTo(fecha1); // Retorna en orden descendente (más reciente primero)
         });
     }
@@ -151,52 +137,34 @@ public class GestorRegRRes implements IAgregado{
     @Transactional()
     @SuppressWarnings("unchecked")
     public List<String> tomarSeleccionES(String eventoSelecc){
-        for (Map<String, Object> diccEvento : listaESNoRevisados) { // Busca el evento correspondiente en la lista de eventos no revisados
-            Map<String, Object> datos = (Map<String, Object>) diccEvento.get("datos");
-            String datosStr = String.format( // Arma el texto del evento tal como se muestra en pantalla
-                    "fechaHoraOcurrencia=%s, latitudEpicentro=%.2f, latitudHipocentro=%.2f, longitudEpicentro=%.2f, longitudHipocentro=%.2f, valorMagnitud=%.1f",
-                    datos.get("fechaHoraOcurrencia"),
-                    datos.get("latitudEpicentro"),
-                    datos.get("latitudHipocentro"),
-                    datos.get("longitudEpicentro"),
-                    datos.get("longitudHipocentro"),
-                    datos.get("valorMagnitud")
-            );
-            if (datosStr.equals(eventoSelecc)) { // Compara el texto armado con el que paso la pantalla
-                // Si coinciden, guarda este evento como el seleccionado para revisar
-                EventoSismico evento = (EventoSismico) diccEvento.get("evento");
-                eventoSismicoSeleccionado = eventoSismicoRepository.fetchComplete(evento).orElseThrow(() -> new IllegalArgumentException("No se encontró evento sísmico"));
-        
-            break;
-            }
-        }
+        // Localiza el evento a partir de la cadena formateada y trae el grafo completo
+        this.eventoSismicoSeleccionado = this.eventoSismicoRepository
+                .fetchCompleteByFormattedString(eventoSelecc)
+                .orElseThrow(() -> new IllegalArgumentException("No se encontró evento sísmico"));
             //cargo los datos necesarios desde la DB
-            this.listaEstados = new ArrayList<>(this.estadoRepository.findAll());
+        this.listaEstados = new ArrayList<>(this.estadoRepository.findAll());
             // Obtener la última sesión abierta (sin fecha de cierre) desde el repositorio
-            this.sesion = this.sesionRepository
+        this.sesion = this.sesionRepository
             .findTopByFechaHoraCierreIsNullOrderByFechaHoraInicioDesc()
             .orElse(null);
 
-            this.buscarEstadoBloqueadoEnRev(); // Busca el estado a asignar
+        this.buscarEstadoBloqueadoEnRev(); // Busca el estado a asignar
 
-            this.tomarFechaHoraActual(); // Guarda la fecha y hora actual para registrar el cambio de estado
+        this.tomarFechaHoraActual(); // Guarda la fecha y hora actual para registrar el cambio de estado
 
-            this.buscarEmpleadoLogueado(); // Obtiene el empleado que está usando el sistema en este momento
+        this.buscarEmpleadoLogueado(); // Obtiene el empleado que está usando el sistema en este momento
 
-            this.bloquearEventoSismico(); // Marca el evento como bloqueado para que nadie más lo modifique mientras se revisa
+        this.bloquearEventoSismico(); // Marca el evento como bloqueado para que nadie más lo modifique mientras se revisa
 
-            this.buscarDatosEventoSismico(); // Extrae los datos del evento que necesita mostrar en pantalla
+        this.buscarDatosEventoSismico(); // Extrae los datos del evento que necesita mostrar en pantalla
 
             // Muestra en la pantalla los datos principales del evento
-            
+        this.buscarDatosSeriesTemporales(); // Busca los datos necesarios para generar la gráfica del sismograma
 
-            this.buscarDatosSeriesTemporales(); // Busca los datos necesarios para generar la gráfica del sismograma
+        this.llamarCUGenerarSismograma(); // instancia al caso de uso que genera el sismograma (CU GenerarSismograma)
 
-            this.llamarCUGenerarSismograma(); // instancia al caso de uso que genera el sismograma (CU GenerarSismograma)
 
-            return Arrays.asList(this.nombreAlcance, this.nombreClasificacion, this.nombreOrigenGeneracion);
-            
-            
+        return Arrays.asList(this.nombreAlcance, this.nombreClasificacion, this.nombreOrigenGeneracion);
     }
 
     public void buscarEstadoBloqueadoEnRev(){
@@ -211,7 +179,7 @@ public class GestorRegRRes implements IAgregado{
 
     @Transactional
     public void bloquearEventoSismico(){ // Bloquea el evento sismico seleccionado
-        this.ultimoCambioDeEstado = this.eventoSismicoSeleccionado.revisar(fechaHoraActual, estadoBloqueadoEnRevision, empleadoLogueado);
+        this.eventoSismicoSeleccionado.revisar(fechaHoraActual, estadoBloqueadoEnRevision, empleadoLogueado);
         // Invoca el metodo para cambiar el estado del evento y almacena el cambio de estado que se crea
         // Persistir el evento junto a su nuevo cambio de estado
         this.eventoSismicoSeleccionado = this.eventoSismicoRepository.save(this.eventoSismicoSeleccionado);
@@ -253,14 +221,26 @@ public class GestorRegRRes implements IAgregado{
     @Transactional
     public String tomarSeleccionResultado(String seleccion, String evento){ //toma la acción a realizar y lleva a cabo el flujo correspondiente
         this.seleccionResultado = seleccion;
-        eventoSismicoSeleccionado = eventoSismicoRepository.fetchComplete(eventoSismicoSeleccionado).orElseThrow(() -> new IllegalArgumentException("No se encontró evento sísmico"));
+        // Si viene la cadena formateada del evento, resolver nuevamente por repositorio
+       eventoSismicoSeleccionado = eventoSismicoRepository
+                    .fetchCompleteByFormattedString(evento)
+                    .orElseThrow(() -> new IllegalArgumentException("Error: No se encontró evento sísmico"));
+        
         
         //cargo los datos necesarios desde la DB
         this.listaEstados = new ArrayList<>(this.estadoRepository.findAll());
+        this.sesion = this.sesionRepository
+            .findTopByFechaHoraCierreIsNullOrderByFechaHoraInicioDesc()
+            .orElse(null);
+
+            
             
 
         if (this.validarDatosMinimos()){ //valida que se tengan los datos mínimos para poder registrar el resultado
             this.tomarFechaHoraActual();
+            this.buscarEmpleadoLogueado(); // Obtiene el empleado que está usando el sistema en este momento
+            //vuelve a obtener el empleado para no depender de la peticion anterior.
+
             switch (seleccionResultado) {
                 case "Rechazado": // Si se rechaza, busca al estado 'Rechazado' y rechaza al evento sismico, llamando a los metodos correspondientes
                     this.buscarEstadoRechazado();
@@ -286,14 +266,14 @@ public class GestorRegRRes implements IAgregado{
 
     @Transactional
     public void rechazarEventoSismico(){ // Rechaza el evento sismico seleccionado
-        this.eventoSismicoSeleccionado.rechazar(fechaHoraActual, estadoRechazado, empleadoLogueado,ultimoCambioDeEstado); // Llama al metodo rechazar()
+        this.eventoSismicoSeleccionado.rechazar(fechaHoraActual, estadoRechazado, empleadoLogueado); // Llama al metodo rechazar()
         // Persistir el evento junto a su nuevo cambio de estado
         this.eventoSismicoSeleccionado = this.eventoSismicoRepository.save(this.eventoSismicoSeleccionado);
     }
 
     @Transactional
     public void confirmarEventoSismico(){ // Confirma el evento sismico seleccionado
-        this.eventoSismicoSeleccionado.confirmar(fechaHoraActual, estadoConfirmado, empleadoLogueado,ultimoCambioDeEstado); // Llama al metodo confirmar()
+        this.eventoSismicoSeleccionado.confirmar(fechaHoraActual, estadoConfirmado, empleadoLogueado); // Llama al metodo confirmar()
         this.notificarConfirmacionAInteresados(); // se notifica a los interesados de la confirmación de un evento sísmico
         // Persistir el evento junto a su nuevo cambio de estado
         this.eventoSismicoSeleccionado = this.eventoSismicoRepository.save(this.eventoSismicoSeleccionado);
@@ -307,23 +287,12 @@ public class GestorRegRRes implements IAgregado{
 
     @SuppressWarnings("unchecked")
     public boolean validarDatosMinimos(){ // Valida que exista magnitud, alcance y origen de generación del evento y que se haya seleccionado una accion
-        float magnitud = 0;
-        for (Map<String, Object> diccEvento : listaESNoRevisados) {
-             
-        
-        
-            EventoSismico evento = (EventoSismico) diccEvento.get("evento");
-            
-            if (evento.equals(eventoSismicoSeleccionado)) {
-                Map<String, Object> datos = (Map<String, Object>) diccEvento.get("datos");
-                // Suponiendo que el valor es un float, lo casteamos
-                magnitud = (float) datos.get("valorMagnitud");
-
-                break;
-            }
-        }
-        
-       // Retorna 'true' si se validaron los datos minimos, o 'false' en caso contrario
+        //vuelve a buscar los datos para no depender de peticiones anteriores
+        double magnitud = (double) this.eventoSismicoSeleccionado.getValorMagnitud();
+        this.nombreAlcance = this.eventoSismicoSeleccionado.mostrarAlcance();
+        this.nombreOrigenGeneracion= this.eventoSismicoSeleccionado.mostrarOrigenGeneracion();
+        this.nombreClasificacion = this.eventoSismicoSeleccionado.mostrarClasificacion();
+        // Retorna 'true' si se validaron los datos minimos, o 'false' en caso contrario
         return (magnitud != 0 & this.nombreAlcance != null & this.nombreOrigenGeneracion != null & this.seleccionResultado != null);
     }
 
@@ -357,7 +326,6 @@ public class GestorRegRRes implements IAgregado{
                 ", nombreAlcance='" + nombreAlcance + '\'' +
                 ", nombreOrigenGeneracion='" + nombreOrigenGeneracion + '\'' +
                 ", nombreClasificacion='" + nombreClasificacion + '\'' +
-                ", ultimoCambioDeEstado=" + ultimoCambioDeEstado +
                 ", sismografos=" + sismografos +
                 '}';
     } // Muestra el valor de los atributos del Gestor

@@ -19,28 +19,55 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.CascadeType;
+import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 
 @Entity
+/*
+ * Mapeo a la tabla 'evento_sismico' con una clave natural única
+ * para evitar duplicados exactos de eventos (más allá del id).
+ * La restricción considera: fechaHoraOcurrencia, lat/lon (epi/hipo) y magnitud.
+ * Además, explicitamos los nombres de columna en snake_case para alinear
+ * con el esquema físico utilizado por data.sql.
+ */
+@Table(
+    name = "evento_sismico",
+    uniqueConstraints = @UniqueConstraint(
+        name = "uk_evento_sismico_natural",
+        columnNames = {
+            "fecha_hora_ocurrencia",
+            "latitud_epicentro",
+            "latitud_hipocentro",
+            "longitud_epicentro",
+            "longitud_hipocentro",
+            "valor_magnitud"
+        }
+    )
+)
 public class EventoSismico {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @Column(nullable = true)
+    // Campos principales del evento; se mapean a columnas snake_case
+    @Column(name = "fecha_hora_fin", nullable = true)
     private LocalDateTime fechaHoraFin;
-    @Column()
+    @Column(name = "fecha_hora_ocurrencia")
     private LocalDateTime fechaHoraOcurrencia;
-    @Column()
+    @Column(name = "latitud_epicentro")
     private float latitudEpicentro;
-    @Column()
+    @Column(name = "latitud_hipocentro")
     private float latitudHipocentro;
-    @Column()
+    @Column(name = "longitud_epicentro")
     private float longitudEpicentro;
-    @Column()
+    @Column(name = "longitud_hipocentro")
     private float longitudHipocentro;
-    @Column()
+    @Column(name = "valor_magnitud")
     private float valorMagnitud; //chequear
     @ManyToOne
     private Estado estadoActual;
+    // Relación unidireccional 1..N: el FK 'evento_sismico_id' vive en 'cambio_estado'
+    // Cascade ALL + orphanRemoval para propagar altas/bajas al persistir/eliminar el evento.
+    // Set evita duplicados lógicos y ayuda a esquivar MultipleBagFetchException.
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "evento_sismico_id", nullable = true)
     private Set<CambioEstado> cambioEstado = new HashSet<>();
@@ -52,6 +79,8 @@ public class EventoSismico {
     private OrigenDeGeneracion origenGeneracion;
     @ManyToOne
     private AlcanceSismo alcanceSismo;
+    // Relación unidireccional 1..N con 'serie_temporal' mediante FK 'evento_sismico_id'.
+    // Usamos Set para minimizar problemas de múltiples bolsas en fetch y evitar repetidos.
     @OneToMany
     @JoinColumn(name = "evento_sismico_id", nullable = true)
     private Set<SerieTemporal> serieTemporal = new HashSet<>();
@@ -84,6 +113,8 @@ public class EventoSismico {
     public boolean esPendienteDeRevision() { return this.estadoActual.esPendienteDeRevision(); } // Metodo que nos comunica si el estado actual es PendienteDeRevision
 
     public Map<String, Object> getDatosPrincipales() { // Obtiene los datos principales del evento ordenados dentro de un HashMap
+        // Este mapa se utiliza para construir la cadena formateada mostrada en la UI
+        // y sirve de base para búsquedas por "cadena formateada" en el repositorio.
         LocalDateTime fechaHoraOcurrencia = this.getFechaHoraOcurrencia();
         float latitudEpicentro = this.getLatitudEpicentro();
         float latitudHipocentro = this.getLatitudHipocentro();
@@ -126,22 +157,21 @@ public class EventoSismico {
         return valorMagnitud;
     }
 
-    public CambioEstado revisar(LocalDateTime fechaHoraInicio, Estado estado, Empleado empleadoLogueado) { // Pone fin al ultimo cambio de estado y crea uno nuevo
+    public void revisar(LocalDateTime fechaHoraInicio, Estado estado, Empleado empleadoLogueado) { // Pone fin al ultimo cambio de estado y crea uno nuevo
         this.buscarUltimoEstado(fechaHoraInicio); // Busca el ultimo CambioEstado
         CambioEstado nuevoEstado = this.crearCambioEstado(fechaHoraInicio, estado, empleadoLogueado); // Crea una nueva instancia de CambioEstado
         this.setEstadoActual(estado); // Asigna el nuevo estado actual
-
-        return nuevoEstado; // Devuelve el cambio de estado para que el gestor lo almacene y posteriormente no se tenga que buscar.
+ // Devuelve el cambio de estado para que el gestor lo almacene y posteriormente no se tenga que buscar.
     }
 
-    public void rechazar(LocalDateTime fechaHoraInicio, Estado estado, Empleado empleadoLogueado, CambioEstado ultimoEstado) { // Pone fin al ultimo cambio de estado y crea uno
-        this.actualizarUltimoEstado(fechaHoraInicio, ultimoEstado); // Setea fechaFin al ultimo estado
-        this.crearCambioEstado(fechaHoraInicio, estado, empleadoLogueado); // Crea un nuevo cambio de estado
+    public void rechazar(LocalDateTime fechaHoraInicio, Estado estado, Empleado empleadoLogueado) { // Pone fin al ultimo cambio de estado y crea uno
+        this.buscarUltimoEstado(fechaHoraInicio); // Busca el ultimo CambioEstado
+        this.crearCambioEstado(fechaHoraInicio, estado, empleadoLogueado); // Crea un nuevo cambio de estado, lo hace de nuevo para no depender de peticiones anteriores
         this.setEstadoActual(estado); // Asigna el nuevo estado acutal
     }
 
-    public void confirmar(LocalDateTime fechaHoraInicio, Estado estado, Empleado empleadoLogueado, CambioEstado ultimoEstado) {
-        this.actualizarUltimoEstado(fechaHoraInicio, ultimoEstado); // Setea fechaFin al ultimo estado
+    public void confirmar(LocalDateTime fechaHoraInicio, Estado estado, Empleado empleadoLogueado) {
+        this.buscarUltimoEstado(fechaHoraInicio); // Busca el ultimo CambioEstado, lo hace de nuevo para no depender de peticiones anteriores
         this.crearCambioEstado(fechaHoraInicio, estado, empleadoLogueado); // Crea un nuevo cambio de estado
         this.setEstadoActual(estado); // Asigna el nuevo estado acutal
     }
@@ -191,6 +221,8 @@ public class EventoSismico {
     }
 
     public void clasificarDatosPorEstacionSismologica(ArrayList<String> datosSeries) { // Ordena la lista de datos de las series sismologicas por estacion sismologica
+        // Ordena lexicográficamente por el "código de estación" presente en el string de datos.
+        // De esta forma no dependemos de la posición del dato ni atamos lógica a ids internos.
         datosSeries.sort(Comparator.comparing(dato -> {
             // Extrae el código de estación
             /* Hacerlo de esta forma evitará la necesidad de modificar el código si la
@@ -211,6 +243,8 @@ public class EventoSismico {
                 '}';
     } // Muestra el valor de los atributos del objeto EventoSismico
 
+    // Importante: igualdad por identidad persistente (id).
+    // Necesario para el correcto funcionamiento de Set y coherencia con el contexto de persistencia.
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

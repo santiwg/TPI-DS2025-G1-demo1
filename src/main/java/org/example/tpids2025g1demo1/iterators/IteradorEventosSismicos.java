@@ -14,6 +14,7 @@ public class IteradorEventosSismicos implements IIterador {
 
     @Override
     public boolean haTerminado() {
+
         return actual >= eventosSismicos.length;
     }
 
