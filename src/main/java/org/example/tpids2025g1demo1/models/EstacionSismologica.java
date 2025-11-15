@@ -26,7 +26,7 @@ public class EstacionSismologica {
     @Column()
     private String nombre;
     @Column(nullable = true)
-    private int nroCertificacionAdquisicion;
+    private Integer nroCertificacionAdquisicion;
 
     public EstacionSismologica(){}
 

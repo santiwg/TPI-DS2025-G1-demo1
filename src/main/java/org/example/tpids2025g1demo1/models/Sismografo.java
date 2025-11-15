@@ -2,6 +2,7 @@ package org.example.tpids2025g1demo1.models;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.List;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -24,24 +25,26 @@ public class Sismografo {
     @Column(nullable = true) //no debería poder ser null en realidad hay que ver como hacemos!!
     private String nroSerie;
     @OneToMany
-    private ArrayList<SerieTemporal> serieTemporal;
+    @JoinColumn(name = "sismografo_id", nullable = true)
+    private List<SerieTemporal> serieTemporal = new ArrayList<>();
     @ManyToOne
     private EstacionSismologica estacionSismologica;
     @ManyToOne
     @JoinColumn(nullable = true) //no debería poder ser null en realidad hay que ver como hacemos!!
     private Estado estadoActual;
     @OneToMany
-    private ArrayList<CambioEstado> cambioEstado;
+    @JoinColumn(name = "sismografo_id", nullable = true)
+    private List<CambioEstado> cambioEstado = new ArrayList<>();
 
     public Sismografo(){}
 
-    public Sismografo(int identificadorSismografo, ArrayList<SerieTemporal> seriesTemporales, EstacionSismologica estacionSismologica) {
+    public Sismografo(int identificadorSismografo, List<SerieTemporal> seriesTemporales, EstacionSismologica estacionSismologica) {
         this.identificadorSismografo = identificadorSismografo;
         this.serieTemporal = seriesTemporales;
         this.estacionSismologica = estacionSismologica;
     }
 
-    public Sismografo(LocalDateTime fechaAdquisicion, int idSismografo, String nroSerie, ArrayList<SerieTemporal> serieTemporal, EstacionSismologica estacionSismologica, Estado estadoActual, ArrayList<CambioEstado> cambiosDeEstado) {
+    public Sismografo(LocalDateTime fechaAdquisicion, int idSismografo, String nroSerie, List<SerieTemporal> serieTemporal, EstacionSismologica estacionSismologica, Estado estadoActual, List<CambioEstado> cambiosDeEstado) {
         this.fechaAdquisicion = fechaAdquisicion;
         this.identificadorSismografo = idSismografo;
         this.nroSerie = nroSerie;

@@ -4,7 +4,11 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.Objects;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -38,7 +42,8 @@ public class EventoSismico {
     @ManyToOne
     private Estado estadoActual;
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
-    private ArrayList<CambioEstado> cambioEstado;
+    @JoinColumn(name = "evento_sismico_id", nullable = true)
+    private Set<CambioEstado> cambioEstado = new HashSet<>();
     //cascade = ALL: propaga al hijo las operaciones sobre el padre:
     //persist/save: al guardar el EventoSismico, se insertan también los CambioEstado nuevos agregados a la lista.
     @ManyToOne
@@ -48,7 +53,8 @@ public class EventoSismico {
     @ManyToOne
     private AlcanceSismo alcanceSismo;
     @OneToMany
-    private ArrayList<SerieTemporal> serieTemporal;
+    @JoinColumn(name = "evento_sismico_id", nullable = true)
+    private Set<SerieTemporal> serieTemporal = new HashSet<>();
     @ManyToOne
     @JoinColumn(nullable = true)
     private Empleado analistaSuperior;
@@ -56,7 +62,7 @@ public class EventoSismico {
     public EventoSismico() {
     }
 
-    public EventoSismico(LocalDateTime fechaHoraOcurrencia, float latitudEpicentro, float latitudHipocentro, float longitudEpicentro, float longitudHipocentro, float valorMagnitud, Estado estadoActual, ArrayList<CambioEstado> cambioEstado, ClasificacionSismo clasificacion, OrigenDeGeneracion origenGeneracion, AlcanceSismo alcanceSismo, ArrayList<SerieTemporal> serieTemporal) {
+    public EventoSismico(LocalDateTime fechaHoraOcurrencia, float latitudEpicentro, float latitudHipocentro, float longitudEpicentro, float longitudHipocentro, float valorMagnitud, Estado estadoActual, List<CambioEstado> cambioEstado, ClasificacionSismo clasificacion, OrigenDeGeneracion origenGeneracion, AlcanceSismo alcanceSismo, List<SerieTemporal> serieTemporal) {
         this.fechaHoraOcurrencia = fechaHoraOcurrencia;
         this.latitudEpicentro = latitudEpicentro;
         this.latitudHipocentro = latitudHipocentro;
@@ -64,11 +70,11 @@ public class EventoSismico {
         this.longitudHipocentro = longitudHipocentro;
         this.valorMagnitud = valorMagnitud;
         this.estadoActual = estadoActual;
-        this.cambioEstado = cambioEstado;
+        this.cambioEstado = new HashSet<>(cambioEstado);
         this.clasificacion = clasificacion;
         this.origenGeneracion = origenGeneracion;
         this.alcanceSismo = alcanceSismo;
-        this.serieTemporal = serieTemporal;
+        this.serieTemporal = new HashSet<>(serieTemporal);
     }
 
     public boolean esAutoDetectado(){
@@ -151,7 +157,7 @@ public class EventoSismico {
 
     public CambioEstado crearCambioEstado(LocalDateTime fechaHoraInicio, Estado estado, Empleado empleadoLogueado) { // Crea un nuevo cambio de estado
         CambioEstado nuevoCambio = new CambioEstado(fechaHoraInicio, estado, empleadoLogueado); // Crea una instancia de CambioEstado
-        this.cambioEstado.add(nuevoCambio); // Añade la nueva instancia al array cambioEstado
+        this.cambioEstado.add(nuevoCambio); // Añade la nueva instancia al set cambioEstado
 
         return nuevoCambio; // Devuelve el cambio de estado para que el gestor lo almacene y posteriormente no se tenga que buscar.
     }
@@ -204,4 +210,17 @@ public class EventoSismico {
                 ", cambioEstado=" + cambioEstado +
                 '}';
     } // Muestra el valor de los atributos del objeto EventoSismico
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        EventoSismico that = (EventoSismico) o;
+        return id != null && id.equals(that.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(id);
+    }
 }

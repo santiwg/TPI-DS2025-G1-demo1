@@ -1,5 +1,6 @@
 package org.example.tpids2025g1demo1.models;
 import java.time.LocalDateTime;
+import java.util.Objects;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -37,6 +38,8 @@ public class CambioEstado {
         this.fechaHoraFin = fechaHoraFin;
     } // Setea fechaHoraFin de un objeto CambioEstado
 
+    // relación con EventoSismico ahora se maneja unidireccionalmente desde EventoSismico
+
     @Override
     public String toString() {
         return "CambioEstado{" +
@@ -46,4 +49,17 @@ public class CambioEstado {
                 ", empleadoResponsable=" + empleadoResponsable +
                 '}';
     } // Muestra el valor de los atributos del objeto CambioEstado
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        CambioEstado that = (CambioEstado) o;
+        return id != null && id.equals(that.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(id);
+    }
 }

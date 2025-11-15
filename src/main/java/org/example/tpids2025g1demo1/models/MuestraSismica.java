@@ -2,13 +2,18 @@ package org.example.tpids2025g1demo1.models;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 
+import java.util.HashSet;
+import java.util.Set;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.JoinColumn;
 
 @Entity
 public class MuestraSismica {
@@ -18,12 +23,13 @@ public class MuestraSismica {
     @Column()
     private LocalDateTime fechaHoraMuestra;
     @OneToMany
-    private ArrayList<DetalleMuestraSismica> detalleMuestraSismica;
+    @JoinColumn(name = "muestra_sismica_id", nullable = true)
+    private Set<DetalleMuestraSismica> detalleMuestraSismica = new HashSet<>();
 
-
-    public MuestraSismica(LocalDateTime fechaHoraMuestra, ArrayList<DetalleMuestraSismica> detalleMuestraSismica) {
+    public MuestraSismica(){}
+    public MuestraSismica(LocalDateTime fechaHoraMuestra, List<DetalleMuestraSismica> detalleMuestraSismica) {
         this.fechaHoraMuestra = fechaHoraMuestra;
-        this.detalleMuestraSismica = detalleMuestraSismica;
+        this.detalleMuestraSismica = (detalleMuestraSismica == null) ? new HashSet<>() : new HashSet<>(detalleMuestraSismica);
     }
 
     public String getDatos() {
@@ -32,5 +38,18 @@ public class MuestraSismica {
             datos = datos + "," + detalle.getDatos(); // Agrega los datos de cada detalle de muestra al string
         }
         return datos; // Devuelve el string completo con los datos concatenados
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        MuestraSismica that = (MuestraSismica) o;
+        return id != null && id.equals(that.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(id);
     }
 }

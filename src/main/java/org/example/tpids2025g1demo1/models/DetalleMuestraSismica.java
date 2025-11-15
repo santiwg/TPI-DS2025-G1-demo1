@@ -8,6 +8,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.ManyToOne;
+import java.util.Objects;
 
 @Entity
 public class DetalleMuestraSismica {
@@ -29,4 +30,17 @@ public class DetalleMuestraSismica {
     public String getDatos() {
         return this.tipoDeDato.getDenominacion()+":"+valor;
     } // Devuelve la denominación del tipo de dato y su valor. Ejemplo: 'Longitud : 20'
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        DetalleMuestraSismica that = (DetalleMuestraSismica) o;
+        return id != null && id.equals(that.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(id);
+    }
 }

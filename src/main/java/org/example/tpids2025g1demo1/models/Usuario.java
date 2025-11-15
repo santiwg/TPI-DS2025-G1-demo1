@@ -24,6 +24,7 @@ public class Usuario {
         this.nombreUsuario = nombreUsuario;
         this.empleado = empleado;
     }
+    public Usuario() {}
 
     public Empleado getEmpleado() { return this.empleado; }
 }

@@ -20,7 +20,7 @@ public class Sesion {
     private LocalDateTime fechaHoraCierre;
     @ManyToOne
     private Usuario usuario;
-
+    public Sesion(){}
     public Sesion(LocalDateTime fechaHoraInicio, Usuario usuario) {
         this.fechaHoraInicio = fechaHoraInicio;
         this.usuario = usuario;
