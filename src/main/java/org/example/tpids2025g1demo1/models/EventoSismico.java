@@ -19,25 +19,41 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.CascadeType;
+import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 
 @Entity
+@Table(
+    name = "evento_sismico",
+    uniqueConstraints = @UniqueConstraint(
+        name = "uk_evento_sismico_natural",
+        columnNames = {
+            "fecha_hora_ocurrencia",
+            "latitud_epicentro",
+            "latitud_hipocentro",
+            "longitud_epicentro",
+            "longitud_hipocentro",
+            "valor_magnitud"
+        }
+    )
+)
 public class EventoSismico {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @Column(nullable = true)
+    @Column(name = "fecha_hora_fin", nullable = true)
     private LocalDateTime fechaHoraFin;
-    @Column()
+    @Column(name = "fecha_hora_ocurrencia")
     private LocalDateTime fechaHoraOcurrencia;
-    @Column()
+    @Column(name = "latitud_epicentro")
     private float latitudEpicentro;
-    @Column()
+    @Column(name = "latitud_hipocentro")
     private float latitudHipocentro;
-    @Column()
+    @Column(name = "longitud_epicentro")
     private float longitudEpicentro;
-    @Column()
+    @Column(name = "longitud_hipocentro")
     private float longitudHipocentro;
-    @Column()
+    @Column(name = "valor_magnitud")
     private float valorMagnitud; //chequear
     @ManyToOne
     private Estado estadoActual;
