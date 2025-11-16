@@ -9,6 +9,7 @@ import org.example.tpids2025g1demo1.repositories.EstadoRepository;
 import org.example.tpids2025g1demo1.repositories.EventoSismicoRepository;
 import org.example.tpids2025g1demo1.repositories.SesionRepository;
 import org.example.tpids2025g1demo1.repositories.SismografoRepository;
+import org.example.tpids2025g1demo1.repositories.CambioEstadoRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -54,16 +55,19 @@ public class GestorRegRRes implements IAgregado {
     private final SesionRepository sesionRepository;
     private final EstadoRepository estadoRepository;
     private final SismografoRepository sismografoRepository;
+    private final CambioEstadoRepository cambioEstadoRepository;
 
-    public GestorRegRRes(EventoSismicoRepository eventoSismicoRepository,
+        public GestorRegRRes(EventoSismicoRepository eventoSismicoRepository,
             SesionRepository sesionRepository,
             EstadoRepository estadoRepository,
-            SismografoRepository sismografoRepository) {
+            SismografoRepository sismografoRepository,
+            CambioEstadoRepository cambioEstadoRepository) {
         // Inyección de dependencias de los repositorios necesarios
         this.eventoSismicoRepository = eventoSismicoRepository;
         this.sesionRepository = sesionRepository;
         this.estadoRepository = estadoRepository;
         this.sismografoRepository = sismografoRepository;
+        this.cambioEstadoRepository = cambioEstadoRepository;
 
     }
 
@@ -264,6 +268,12 @@ public class GestorRegRRes implements IAgregado {
 
         if (this.validarDatosMinimos()) { // valida que se tengan los datos mínimos para poder registrar el resultado
             this.tomarFechaHoraActual();
+            // Rehidrata el último cambio de estado pasando el objeto completo
+            // (el repositorio extrae los atributos necesarios sin usar IDs)
+            this.ultimoCambioDeEstado = this.cambioEstadoRepository
+                    .fetchActualByCambioAndEvento(this.ultimoCambioDeEstado, eventoSismicoSeleccionado)
+                    .orElse(this.ultimoCambioDeEstado);
+            
             switch (seleccionResultado) {
                 case "Rechazado": // Si se rechaza, busca al estado 'Rechazado' y rechaza al evento sismico,
                                   // llamando a los metodos correspondientes
@@ -279,13 +289,8 @@ public class GestorRegRRes implements IAgregado {
                     // No se implementa
                     break;
                 default:
-                    throw new IllegalArgumentException("Error: Resultado inválido: " + seleccionResultado); // Si el
-                                                                                                            // resultado
-                                                                                                            // seleccionado
-                                                                                                            // es
-                                                                                                            // invalido,
-                                                                                                            // lo
-                                                                                                            // informa
+                    throw new IllegalArgumentException("Error: Resultado inválido: " + seleccionResultado); 
+                    // Si el resultado seleccionado es invalido lo informa
             }
             return "El evento sismico ha sido " + seleccionResultado.toLowerCase() + " correctamente.";
 

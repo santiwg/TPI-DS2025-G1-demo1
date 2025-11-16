@@ -38,6 +38,10 @@ public class CambioEstado {
         this.fechaHoraFin = fechaHoraFin;
     } // Setea fechaHoraFin de un objeto CambioEstado
 
+    public LocalDateTime getFechaHoraInicio() { return fechaHoraInicio; }
+
+    public LocalDateTime getFechaHoraFin() { return fechaHoraFin; }
+
     // relación con EventoSismico ahora se maneja unidireccionalmente desde EventoSismico
 
     @Override
